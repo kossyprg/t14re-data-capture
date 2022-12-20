@@ -49,6 +49,20 @@ class T14re():
         print('width: ' + str(width))
         print('height: ' + str(height))
         
+        camera_num = self.count_camera_num()
+        if camera_num > 1:
+            print('\nCAUTION: %d cameras are connected.' % camera_num)
+            s = 0
+            for _ in range(32):
+                s = input('\nPlease disable any cameras except for a radar from the Device Manager and set CaptureDeviceIndex=0.\n'
+                'Or, have you set an appropriate CaptureDeviceIndex? [y/n]: ')
+                if s=='y':
+                    break
+                elif s=='n':
+                    return False
+                else:
+                    print('\nInvalid input!')
+
         self.cap = cv2.VideoCapture(CaptureDeviceIndex, cv2.CAP_MSMF)
         TF1 = self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
         TF2 = self.cap.set(cv2.CAP_PROP_FORMAT, -1)
@@ -56,10 +70,10 @@ class T14re():
         TF4 = self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         if TF1 & TF2 & TF3 & TF4 & self.cap.isOpened():
             self.isConnected = True
-            print('Connection has succeeded!')
+            print('\nConnection has succeeded!')
         else:
             self.isConnected = False
-            print('Error: Connection failed. Please unplug cables and reconnect.',file=sys.stderr)
+            print('\nError: Connection failed. Please unplug cables and reconnect.',file=sys.stderr)
         return True
         
     def get_and_put_data(self):
@@ -154,6 +168,15 @@ class T14re():
             print('Disconnect.')
         else:
             print('Error: Already disconnected.', file=sys.stderr)
+    
+    def count_camera_num(self):
+        cameraNum = 0
+        for cameraId in range(5):
+            cap = cv2.VideoCapture(cameraId,cv2.CAP_MSMF)
+            if cap.isOpened():
+                cameraNum += 1
+            cap.release()
+        return cameraNum
             
 class Config():
     def __init__(self):
