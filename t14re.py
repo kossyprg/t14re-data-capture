@@ -21,7 +21,8 @@ class T14re():
         self.cap = 0
         self.DefaultFolderName = 'data_t14re'
         self.framecnt = 0
-        self.filecnt = 0
+        self.getfilecnt = 0
+        self.savefilecnt = 0
         self.MaxFiles = 0
     
     def get_com_port(self):
@@ -63,13 +64,13 @@ class T14re():
         
     def get_and_put_data(self):
         while not self.isStopped:
+            self.getfilecnt += 1
             ret, data = self.cap.read()
             self.q.put(data)
             filename = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f_')
-            filename = filename + str(int(self.config.Fs)) + 'fps_' + str(self.filecnt+1) + '.bin'
+            filename = filename + str(int(self.config.Fs)) + 'fps_' + str(self.getfilecnt) + '.bin'
             self.q_name.put(filename)
-            self.filecnt = self.filecnt + 1
-            print('\rfilecnt:',self.filecnt, end='')
+            print('\rfilecnt:',self.getfilecnt, end='')
         print('\nFinish')
     
     def save_data(self):
@@ -88,9 +89,18 @@ class T14re():
                     frame = self.q.get(block=False)
                     f.write(frame.tobytes())
                     f.close()
-                    if self.filecnt >= self.MaxFiles and self.MaxFiles > 0:
+                    self.savefilecnt += 1
+                    if self.getfilecnt >= self.MaxFiles and self.MaxFiles > 0:
                         self.isStopped = True
                         break
+                        
+        while self.savefilecnt < self.MaxFiles and self.MaxFiles > 0:
+            filename = self.q_name.get(block=False)
+            f = open(self.DefaultFolderName + '/' + foldername + '/' + filename,mode='ab')
+            frame = self.q.get(block=False)
+            f.write(frame.tobytes())
+            f.close()
+            self.savefilecnt += 1
     
     def PressQuitKeyEvent(self):
         s = 0
@@ -105,7 +115,8 @@ class T14re():
         if MaxFiles is less than 1 (0 for example), then PC wait for q key to stop (be careful with the data size).
         '''
         self.isStopped = False
-        self.filecnt = 0
+        self.getfilecnt = 0
+        self.savefilecnt = 0
         while not self.q.empty():
             self.q.get(block=False)
         while not self.q_name.empty():
