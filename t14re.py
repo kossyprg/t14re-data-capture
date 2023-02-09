@@ -115,18 +115,12 @@ class T14re():
             f.write(frame.tobytes())
             f.close()
             self.savefilecnt += 1
-    
-    def PressQuitKeyEvent(self):
-        s = 0
-        while s!='q':
-            s = input('\nPress q to stop capturing: ')
-        self.isStopped = True
         
-    def capture(self,MaxFiles=0,startDatetime=0):
+    def capture(self,MaxFiles=0,startDatetime=0,endDatetime=0):
         '''
         Start capturing
-        if MaxFiles is 1 or more, then radar captures MaxFiles files.
-        if MaxFiles is less than 1 (0 for example), then PC wait for q key to stop (be careful with the data size).
+        if MaxFiles >= 1, radar captures MaxFiles files.
+        if MaxFiles <  1, PC waits for q key to stop (be careful with the data size).
         '''
         self.isStopped = False
         self.getfilecnt = 0
@@ -145,17 +139,29 @@ class T14re():
             print('Start datetime:',d)
             
             if MaxFiles<1:
-                print('Capture until press q')
                 self.MaxFiles = -1
-                thread1 = threading.Thread(target=self.get_and_put_data)
-                thread2 = threading.Thread(target=self.save_data)
-                thread3 = threading.Thread(target=self.PressQuitKeyEvent)
-                thread1.start()
-                thread2.start()
-                thread3.start()
-                thread1.join()
-                thread2.join()
-                thread3.join()
+                if endDatetime==0:
+                    print('Capture until press q')
+                    thread1 = threading.Thread(target=self.get_and_put_data)
+                    thread2 = threading.Thread(target=self.save_data)
+                    thread3 = threading.Thread(target=self.PressQuitKeyEvent)
+                    thread1.start()
+                    thread2.start()
+                    thread3.start()
+                    thread1.join()
+                    thread2.join()
+                    thread3.join()
+                else:
+                    print('Capture until the specified time')
+                    thread1 = threading.Thread(target=self.get_and_put_data)
+                    thread2 = threading.Thread(target=self.save_data)
+                    thread3 = threading.Thread(target=self.stopAtSpecifiedTime,args=(endDatetime,))
+                    thread1.start()
+                    thread2.start()
+                    thread3.start()
+                    thread1.join()
+                    thread2.join()
+                    thread3.join()
             else:
                 print('Capture for decided number of files')
                 self.MaxFiles = MaxFiles
@@ -186,6 +192,12 @@ class T14re():
             cap.release()
         return cameraNum
     
+    def PressQuitKeyEvent(self):
+        s = 0
+        while s!='q':
+            s = input('\nPress q to stop capturing: ')
+        self.isStopped = True
+        
     def waitUntilGivenDatetime(self,Datetime):
         while True:
             diff_start = datetime.datetime.now() - Datetime
@@ -193,6 +205,14 @@ class T14re():
                 time.sleep(1)
             else:
                 break
+        return True
+    
+    def stopAtSpecifiedTime(self,endDatetime):
+        if self.waitUntilGivenDatetime(endDatetime):
+            now = datetime.datetime.now()
+            d = now.strftime('%Y/%m/%d %H:%M:%S')
+            print('\nStop datetime:',d)
+            self.isStopped = True
         return True
             
 class Config():
