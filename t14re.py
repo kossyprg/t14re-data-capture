@@ -122,7 +122,7 @@ class T14re():
             s = input('\nPress q to stop capturing: ')
         self.isStopped = True
         
-    def capture(self,MaxFiles=0):
+    def capture(self,MaxFiles=0,startDatetime=0):
         '''
         Start capturing
         if MaxFiles is 1 or more, then radar captures MaxFiles files.
@@ -135,29 +135,37 @@ class T14re():
             self.q.get(block=False)
         while not self.q_name.empty():
             self.q_name.get(block=False)
-
-        if MaxFiles<1:
-            print('Capture until press q')
-            self.MaxFiles = -1
-            thread1 = threading.Thread(target=self.get_and_put_data)
-            thread2 = threading.Thread(target=self.save_data)
-            thread3 = threading.Thread(target=self.PressQuitKeyEvent)
-            thread1.start()
-            thread2.start()
-            thread3.start()
-            thread1.join()
-            thread2.join()
-            thread3.join()
-        else:
-            print('Capture for decided number of files')
-            self.MaxFiles = MaxFiles
-            thread1 = threading.Thread(target=self.get_and_put_data)
-            thread2 = threading.Thread(target=self.save_data)
-            thread1.start()
-            thread2.start()
-            thread1.join()
-            thread2.join()
+        
+        if startDatetime==0:
+            startDatetime = datetime.datetime.now()
+        
+        if self.waitUntilGivenDatetime(startDatetime):
+            now = datetime.datetime.now()
+            d = now.strftime('%Y/%m/%d %H:%M:%S')
+            print('Start datetime:',d)
             
+            if MaxFiles<1:
+                print('Capture until press q')
+                self.MaxFiles = -1
+                thread1 = threading.Thread(target=self.get_and_put_data)
+                thread2 = threading.Thread(target=self.save_data)
+                thread3 = threading.Thread(target=self.PressQuitKeyEvent)
+                thread1.start()
+                thread2.start()
+                thread3.start()
+                thread1.join()
+                thread2.join()
+                thread3.join()
+            else:
+                print('Capture for decided number of files')
+                self.MaxFiles = MaxFiles
+                thread1 = threading.Thread(target=self.get_and_put_data)
+                thread2 = threading.Thread(target=self.save_data)
+                thread1.start()
+                thread2.start()
+                thread1.join()
+                thread2.join()
+
     def disconnect(self):
         '''
         Disconnect radar.
@@ -177,6 +185,15 @@ class T14re():
                 cameraNum += 1
             cap.release()
         return cameraNum
+    
+    def waitUntilGivenDatetime(self,Datetime):
+        while True:
+            diff_start = datetime.datetime.now() - Datetime
+            if diff_start.days < 0:
+                time.sleep(1)
+            else:
+                break
+        return True
             
 class Config():
     def __init__(self):
