@@ -14,8 +14,8 @@ import sys
 class T14re():
     def __init__(self):
         self.config = 0
-        self.q = queue.Queue(50)
-        self.q_name = queue.Queue(50)
+        self.q = queue.Queue(-1)
+        self.q_name = queue.Queue(-1)
         self.isStopped = False
         self.isConnected = False
         self.cap = 0
