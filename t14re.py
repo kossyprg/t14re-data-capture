@@ -341,15 +341,15 @@ class Config():
             count += int(i)
         return count
         
-def ConvertDataFromBin2Mat(cfgname,targetFolderName=0,save_dir='data_t14re'):
+def ConvertDataFromBin2Mat(cfgname,path=0,save_dir='data_t14re'):
     config = Config()
     config.load_config(cfgname)
 
     targ_dirs = os.listdir(path=save_dir)
-    if targetFolderName==0:
-        targetFolderName = targ_dirs[-1]
-
-    targ_dir = save_dir + "/" + targetFolderName
+    if path==0:
+        targ_dir = save_dir + "/" + targ_dirs[-1]
+    else:
+        targ_dir = path
 
     files = glob.glob(targ_dir + "*/*.bin")
     print("Target directory:",targ_dir)
